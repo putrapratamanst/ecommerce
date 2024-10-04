@@ -1,0 +1,38 @@
+networks:
+  data:
+    driver: bridge
+    name: edot/data.dev
+
+volumes:
+  db_data:
+
+services:
+  product-service:
+    build: 
+      context: ./product-service
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - redis
+    env_file:
+      - path: ./product-service/.env
+
+  redis:
+    image: redis:alpine
+    container_name: ecommerce_redis
+    ports:
+      - "6379:6379"
+
+  db:
+    image: postgres:latest
+    container_name: ecommerce_db
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-ecommerce_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  
