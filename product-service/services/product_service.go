@@ -13,19 +13,23 @@ import (
 
 var ctx = context.Background()
 
-type ProductService struct {
+type ProductService interface {
+	GetProducts(limit, offset int) ([]models.Product, int64, error)
+}
+
+type productService struct {
 	ProductRepository *repositories.ProductRepository
 	RedisClient       *redis.Client
 }
 
-func NewProductService(repo *repositories.ProductRepository, redisClient *redis.Client) *ProductService {
-	return &ProductService{
+func NewProductService(repo *repositories.ProductRepository, redisClient *redis.Client) ProductService {
+	return &productService{
 		ProductRepository: repo,
 		RedisClient:       redisClient,
 	}
 }
 
-func (s *ProductService) GetProducts(limit, offset int) ([]models.Product, int64, error) {
+func (s *productService) GetProducts(limit, offset int) ([]models.Product, int64, error) {
 	cacheKey := fmt.Sprintf("products_%d_%d", limit, offset)
 
 	// Try to get products from Redis cache

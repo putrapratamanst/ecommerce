@@ -6,6 +6,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/putrapratamanst/ecommerce/product-service/config"
 	"github.com/putrapratamanst/ecommerce/product-service/routes"
+	"github.com/putrapratamanst/ecommerce/product-service/services"
+	"github.com/putrapratamanst/ecommerce/product-service/repositories"
+	"github.com/putrapratamanst/ecommerce/product-service/controllers"
 )
 
 func main() {
@@ -22,7 +25,10 @@ func main() {
 	redisClient := config.InitRedis()
 
 	// Setup routes
-	routes.SetupRoutes(app, db, redisClient)
+	productRepo := repositories.NewProductRepository(db)
+	productService := services.NewProductService(productRepo,redisClient)
+    productController := controllers.NewProductController(productService)
+	routes.SetupRoutes(app,productController)
 
 	// Start the server
 	port := os.Getenv("PRODUCT_SERVICE_PORT")
