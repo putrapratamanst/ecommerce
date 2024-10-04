@@ -8,7 +8,6 @@ type APIResponse struct {
     Data    interface{} `json:"data,omitempty"`
 }
 
-// SendResponse untuk mengirimkan respons API
 func SendResponse(c *fiber.Ctx, status int, message string, data interface{}) error {
     response := APIResponse{
         Status:  "success",
@@ -16,7 +15,6 @@ func SendResponse(c *fiber.Ctx, status int, message string, data interface{}) er
         Data:    data,
     }
 
-    // Menyesuaikan response jika status adalah error
     if status >= 400 {
         response.Status = "error"
     }

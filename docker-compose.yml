@@ -40,6 +40,16 @@ services:
     env_file:
       - path: ./shop-service/.env
 
+  warehouse-service:
+    container_name: warehouse-service
+    build: 
+      context: ./warehouse-service
+      dockerfile: Dockerfile
+    ports:
+      - "3003:3003"
+    env_file:
+      - path: ./warehouse-service/.env
+
   redis:
     image: redis:alpine
     container_name: ecommerce_redis
