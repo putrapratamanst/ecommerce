@@ -18,6 +18,17 @@ services:
     env_file:
       - path: ./product-service/.env
 
+  user-service:
+    build: 
+      context: ./user-service
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    depends_on:
+      - redis
+    env_file:
+      - path: ./user-service/.env
+
   redis:
     image: redis:alpine
     container_name: ecommerce_redis
