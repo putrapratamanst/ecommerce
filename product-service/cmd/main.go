@@ -1,14 +1,18 @@
-package cmd
+package main
 
 import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/putrapratamanst/ecommerce/product-service/config"
+	"github.com/putrapratamanst/ecommerce/product-service/controllers"
 )
 
 func main() {
 	// Initialize Fiber app
 	app := fiber.New()
 
+	// Load environment variables
+	config.LoadEnv()
+	
 	// Initialize DB
 	db := config.InitDB()
 
