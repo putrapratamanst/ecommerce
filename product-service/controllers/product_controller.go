@@ -12,30 +12,31 @@ import (
 )
 
 type ProductController struct {
-    ProductService *services.ProductService
+	ProductService *services.ProductService
 }
 
 func NewProductController(db *gorm.DB, redisClient *redis.Client) *ProductController {
-    productRepo := repositories.NewProductRepository(db)
-    productService := services.NewProductService(productRepo, redisClient)
-    return &ProductController{ProductService: productService}
+	productRepo := repositories.NewProductRepository(db)
+	productService := services.NewProductService(productRepo, redisClient)
+	return &ProductController{ProductService: productService}
 }
 
-func (c *ProductController) GetProducts(ctx *fiber.Ctx) error {
-    page, _ := strconv.Atoi(ctx.Query("page", "1"))
-    limit, _ := strconv.Atoi(ctx.Query("limit", "10"))
+func (ctrl *ProductController) GetProducts(ctx *fiber.Ctx) error {
+	page, _ := strconv.Atoi(ctx.Query("page", "1"))
+	limit, _ := strconv.Atoi(ctx.Query("limit", "10"))
 
-    offset := (page - 1) * limit
+	offset := (page - 1) * limit
 
-    products, total, err := c.ProductService.GetProducts(limit, offset)
-    if err != nil {
-        return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Cannot fetch products"})
-    }
+	products, total, err := ctrl.ProductService.GetProducts(limit, offset)
+	if err != nil {
+		return utils.SendResponse(ctx, fiber.StatusInternalServerError, "Cannot fetch products", nil)
+	}
 
-    pagination := utils.Paginate(total, page, limit)
+	pagination := utils.Paginate(total, page, limit)
 
-    return ctx.JSON(fiber.Map{
-        "data":       products,
-        "pagination": pagination,
-    })
+	return utils.SendResponse(ctx, fiber.StatusOK, "Successfully fetched products", fiber.Map{
+		"data":       products,
+		"pagination": pagination,
+	})
+
 }
