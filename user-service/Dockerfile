@@ -8,16 +8,16 @@ RUN go mod download
 
 COPY . .
 
-RUN CGO_ENABLED=0 GOOS=linux go build -o product-service cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o user-service cmd/main.go
 
 # Run stage
 FROM alpine:3.18
 
 WORKDIR /root/
 
-COPY --from=builder /app/product-service .
+COPY --from=builder /app/user-service .
 COPY .env .
 
 EXPOSE 3000
 
-CMD ["./product-service"]
+CMD ["./user-service"]

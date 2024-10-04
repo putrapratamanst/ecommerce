@@ -12,6 +12,7 @@ import (
 type AuthService interface {
 	Login(emailOrPhone, password string) (string, error)
 	Register(user *models.User) error
+	Detail(userID string) (*models.User, error)
 }
 
 type authService struct {
@@ -41,12 +42,21 @@ func (s *authService) Login(emailOrPhone, password string) (string, error) {
 }
 
 func (s *authService) Register(user *models.User) error {
-    // Hash password
-    hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
-    if err != nil {
-        return err
-    }
-    user.Password = string(hashedPassword)
+	// Hash password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	user.Password = string(hashedPassword)
 
-    return s.userRepo.CreateUser(user)
+	return s.userRepo.CreateUser(user)
+}
+
+func (s *authService) Detail(userID string) (*models.User,error) {
+	user, err := s.userRepo.FindByUserID(userID)
+	if err != nil {
+		return &models.User{}, errors.New("user not found")
+	}
+
+	return user, nil
 }
