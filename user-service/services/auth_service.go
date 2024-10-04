@@ -2,12 +2,10 @@ package services
 
 import (
 	"errors"
-	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/putrapratamanst/ecommerce/user-service/config"
 	"github.com/putrapratamanst/ecommerce/user-service/models"
 	"github.com/putrapratamanst/ecommerce/user-service/repositories"
+	"github.com/putrapratamanst/ecommerce/user-service/utils"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -34,13 +32,7 @@ func (s *authService) Login(emailOrPhone, password string) (string, error) {
 		return "", errors.New("invalid credentials")
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":    user.ID,
-		"email": user.Email,
-		"exp":   time.Now().Add(time.Hour * 24).Unix(),
-	})
-
-	tokenString, err := token.SignedString(config.JWT_SECRET)
+	tokenString, err := utils.GenerateToken(user)
 	if err != nil {
 		return "", err
 	}

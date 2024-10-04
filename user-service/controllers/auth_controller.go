@@ -27,35 +27,40 @@ func (ctrl *AuthController) Login(c *fiber.Ctx) error {
 	}
 
 	if err := c.BodyParser(&loginData); err != nil {
-        return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input", nil)
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input", nil)
 	}
 
 	if err := ctrl.validate.Struct(loginData); err != nil {
-        return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation", nil)
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation", nil)
 	}
 
 	token, err := ctrl.AuthService.Login(loginData.EmailOrPhone, loginData.Password)
 	if err != nil {
-        return utils.SendResponse(c, fiber.StatusUnauthorized, err.Error(), nil)
+		return utils.SendResponse(c, fiber.StatusUnauthorized, err.Error(), nil)
 	}
 
-    return utils.SendResponse(c, fiber.StatusOK, "Login successful", fiber.Map{"token": token})
+	return utils.SendResponse(c, fiber.StatusOK, "Login successful", fiber.Map{"token": token})
 }
 
 func (ctrl *AuthController) Register(c *fiber.Ctx) error {
 	var user models.User
 
 	if err := c.BodyParser(&user); err != nil {
-        return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input", nil)
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input", nil)
 	}
 
 	if err := ctrl.validate.Struct(user); err != nil {
-        return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation: " + err.Error(), nil)
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation: "+err.Error(), nil)
 	}
 
 	if err := ctrl.AuthService.Register(&user); err != nil {
-        return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
+		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-    return utils.SendResponse(c, fiber.StatusCreated, "User registered successfully", user)
+	tokenString, err := utils.GenerateToken(&user)
+	if err != nil {
+		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	return utils.SendResponse(c, fiber.StatusCreated, "User registered successfully", fiber.Map{"user": user, "acccessToken": tokenString})
 }
