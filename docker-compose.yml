@@ -5,9 +5,11 @@ networks:
 
 volumes:
   db_data:
+  grafana-storage:
 
 services:
   product-service:
+    container_name: product-service
     build: 
       context: ./product-service
       dockerfile: Dockerfile
@@ -19,6 +21,7 @@ services:
       - path: ./product-service/.env
 
   user-service:
+    container_name: user-service
     build: 
       context: ./user-service
       dockerfile: Dockerfile
@@ -28,6 +31,7 @@ services:
       - path: ./user-service/.env
 
   shop-service:
+    container_name: shop-service
     build: 
       context: ./shop-service
       dockerfile: Dockerfile
@@ -54,3 +58,28 @@ services:
     volumes:
       - db_data:/var/lib/postgresql/data
   
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus:/etc/prometheus/
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    networks:
+      - data
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    depends_on:
+      - prometheus
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "9000:9000"
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+      - data
