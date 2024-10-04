@@ -3,10 +3,11 @@ package controllers
 import (
 	"strconv"
 
+	"github.com/go-redis/redis/v8"
 	"github.com/gofiber/fiber/v2"
 	"github.com/putrapratamanst/ecommerce/product-service/repositories"
-	"github.com/putrapratamanst/ecommerce/product-service/utils"
 	"github.com/putrapratamanst/ecommerce/product-service/services"
+	"github.com/putrapratamanst/ecommerce/product-service/utils"
 	"gorm.io/gorm"
 )
 
@@ -14,9 +15,9 @@ type ProductController struct {
     ProductService *services.ProductService
 }
 
-func NewProductController(db *gorm.DB) *ProductController {
+func NewProductController(db *gorm.DB, redisClient *redis.Client) *ProductController {
     productRepo := repositories.NewProductRepository(db)
-    productService := services.NewProductService(productRepo)
+    productService := services.NewProductService(productRepo, redisClient)
     return &ProductController{ProductService: productService}
 }
 

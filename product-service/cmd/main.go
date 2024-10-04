@@ -12,12 +12,15 @@ func main() {
 
 	// Load environment variables
 	config.LoadEnv()
-	
+
 	// Initialize DB
 	db := config.InitDB()
 
+	// Initialize Redis
+	redisClient := config.InitRedis()
+
 	// Initialize Product controller
-	productController := controllers.NewProductController(db)
+	productController := controllers.NewProductController(db, redisClient)
 
 	// Setup routes
 	app.Get("/products", productController.GetProducts)

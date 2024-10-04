@@ -16,6 +16,7 @@ FROM alpine:3.18
 WORKDIR /root/
 
 COPY --from=builder /app/product-service .
+COPY .env .
 
 EXPOSE 3000
 
