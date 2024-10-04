@@ -1,6 +1,8 @@
 package main
 
 import (
+	"os"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/putrapratamanst/ecommerce/product-service/config"
 	"github.com/putrapratamanst/ecommerce/product-service/controllers"
@@ -26,5 +28,6 @@ func main() {
 	app.Get("/products", productController.GetProducts)
 
 	// Start the server
-	app.Listen(":3000")
+	port := os.Getenv("PRODUCT_SERVICE_PORT")
+	app.Listen(":" + port)
 }
