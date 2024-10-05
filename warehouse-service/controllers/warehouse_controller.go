@@ -1,6 +1,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/putrapratamanst/ecommerce/warehouse-service/models"
@@ -68,4 +70,24 @@ func (ctrl *WarehouseController) SetWarehouseShop(c *fiber.Ctx) error {
 	}
 
 	return utils.SendResponse(c, fiber.StatusOK, "Successfully set warehouse shop", nil)
+}
+
+func (ctrl *WarehouseController) GetShopsByWarehouse(c *fiber.Ctx) error {
+	warehouseID := c.Params("warehouseID")
+	if warehouseID == "" {
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Warehouse ID is required", nil)	
+	}	
+
+	fmt.Println(warehouseID)
+	_, err := ctrl.WarehouseService.GetWarehouseByID(warehouseID)
+	if err != nil {
+		return utils.SendResponse(c, fiber.StatusNotFound, "Warehouse not found", nil)
+	}
+
+	warehouseShops, err := ctrl.WarehouseService.GetShopsWarehouse(warehouseID)
+	if err != nil {
+		return utils.SendResponse(c, fiber.StatusInternalServerError, "Failed to get warehouse shops", nil)
+	}
+
+	return utils.SendResponse(c, fiber.StatusOK, "Successfully get warehouse shops", warehouseShops)
 }

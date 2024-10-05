@@ -19,7 +19,7 @@ func (r *WarehouseRepository) Create(warehouse *models.Warehouse) error {
 
 func (r *WarehouseRepository) FindByID(id string) (*models.Warehouse, error) {
 	var warehouse models.Warehouse
-	err := r.db.First(&warehouse, id).Error
+	err := r.db.Where("status = ?", "active").First(&warehouse, id).Error
 	return &warehouse, err
 }
 
@@ -29,6 +29,12 @@ func (r *WarehouseRepository) SetWarehouseShop(warehouseShop *models.WarehouseSh
 
 func (r *WarehouseRepository) FindByShopIDAndWarehouseID(warehouseID uint, shopID uint) (*models.WarehouseShop, error) {
 	var warehouseShop models.WarehouseShop
-	err := r.db.First(&warehouseShop, "warehouse_id = ? AND shop_id = ?", warehouseID, shopID).Error
+	err := r.db.First(&warehouseShop, "warehouse_id = ? AND shop_id = ? AND status = active", warehouseID, shopID).Error
+	return &warehouseShop, err
+}
+
+func (r *WarehouseRepository) FindShopByWarehouseID(warehouseID uint) (*[]models.WarehouseShop, error) {
+	var warehouseShop []models.WarehouseShop
+	err := r.db.Find(&warehouseShop, "warehouse_id = ?", warehouseID).Error
 	return &warehouseShop, err
 }

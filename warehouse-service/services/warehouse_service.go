@@ -12,6 +12,7 @@ type WarehouseService interface {
 	GetWarehouseByID(id string) (*models.Warehouse, error)
 	SetWarehouseShop(warehouseID string, shopID string) error
 	GetWarehouseShop(warehouseID string, shopID string) (*models.WarehouseShop, error)
+	GetShopsWarehouse(warehouseID string) (*[]models.WarehouseShop, error)
 }
 
 type warehouseService struct {
@@ -48,4 +49,16 @@ func (s *warehouseService) SetWarehouseShop(warehouseID string, shopID string) e
 		ShopID:      uint(shopIDInt),
 	}
 	return s.warehouseRepository.SetWarehouseShop(&warehouseShop)
+}
+
+func (s *warehouseService) GetShopsWarehouse(warehouseID string) (*[]models.WarehouseShop, error) {
+	warehouseIDInt, _ := strconv.ParseUint(warehouseID, 10, 32)
+
+	getShop, err := s.warehouseRepository.FindShopByWarehouseID(uint(warehouseIDInt))
+	if err != nil {
+		return nil, err
+	}
+
+	return getShop, nil
+
 }

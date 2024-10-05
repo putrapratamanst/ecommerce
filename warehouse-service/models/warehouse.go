@@ -6,6 +6,7 @@ type Warehouse struct {
 	gorm.Model
 	Name     string `json:"name" gorm:"not null" validate:"required"`
 	Location string `json:"location" validate:"required"`
+	Status   string `json:"status" validate:"required"`
 }
 
 type WarehouseShop struct {

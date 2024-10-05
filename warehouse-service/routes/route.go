@@ -10,4 +10,5 @@ func SetupWarehouseRoutes(app *fiber.App, warehouseController *controllers.Wareh
 
 	app.Post("/warehouse", middleware.AuthMiddleware, warehouseController.CreateWarehouse)
 	app.Post("/warehouse/:warehouseID/shop/:shopID", middleware.AuthMiddleware, warehouseController.SetWarehouseShop)
+	app.Get("/warehouse/:warehouseID/shops", middleware.AuthMiddleware, warehouseController.GetShopsByWarehouse)
 }
