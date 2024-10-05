@@ -22,9 +22,12 @@ func main() {
 	db := config.InitDB()
 
 	// Setup routes
+	shopServiceURL := os.Getenv("SHOP_SERVICE_URL")
+
 	warehouseRepo := repositories.NewWarehouseRepository(db)
 	warehouseService := services.NewWarehouseService(warehouseRepo)
-	warehouseController := controllers.NewWarehouseController(warehouseService)
+	shopServiceClient := services.NewShopServiceClient(shopServiceURL)
+	warehouseController := controllers.NewWarehouseController(warehouseService, shopServiceClient)
 	routes.SetupWarehouseRoutes(app, warehouseController)
 
 	// Start the server

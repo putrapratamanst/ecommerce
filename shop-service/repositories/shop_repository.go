@@ -18,9 +18,9 @@ func (r *ShopRepository) Create(shop *models.Shop) error {
 }
 
 func (r *ShopRepository) FindByID(shopID int) (*models.Shop, error) {
-    var shop models.Shop
-    err := r.db.First(&shop, shopID).Error
-    return &shop, err
+        var shop models.Shop
+        err := r.db.First(&shop, shopID).Error
+        return &shop, err
 }
 
 func (r *ShopRepository) Update(shop *models.Shop) error {

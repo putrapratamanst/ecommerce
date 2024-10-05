@@ -8,10 +8,11 @@ import (
 	"github.com/putrapratamanst/ecommerce/user-service/models"
 )
 
-func GenerateToken(user *models.User) (string, error){
+func GenerateToken(user *models.User) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":    user.ID,
 		"email": user.Email,
+		"role":  user.Role,
 		"exp":   time.Now().Add(time.Hour * 24).Unix(),
 	})
 
