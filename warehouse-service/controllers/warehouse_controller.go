@@ -1,7 +1,7 @@
 package controllers
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
@@ -16,6 +16,8 @@ type WarehouseController struct {
 	shopService      *services.ShopServiceClient
 }
 
+
+
 func NewWarehouseController(warehouseService services.WarehouseService, shopService *services.ShopServiceClient) *WarehouseController {
 	return &WarehouseController{
 		WarehouseService: warehouseService,
@@ -23,6 +25,7 @@ func NewWarehouseController(warehouseService services.WarehouseService, shopServ
 		shopService:      shopService,
 	}
 }
+
 
 func (ctrl *WarehouseController) CreateWarehouse(c *fiber.Ctx) error {
 	var warehouse models.Warehouse
@@ -49,12 +52,9 @@ func (ctrl *WarehouseController) SetWarehouseShop(c *fiber.Ctx) error {
 		return utils.SendResponse(c, fiber.StatusBadRequest, "Warehouse ID and Shop ID are required", nil)
 	}
 
-	_, errCheckWarehouse := ctrl.WarehouseService.GetWarehouseShop(warehouseID, shopID)
-	if errCheckWarehouse == nil {
-		return utils.SendResponse(c, fiber.StatusInternalServerError, "Successfully set warehouse shop", nil)
-	}
+	warehouseIDInt, _ := strconv.ParseUint(warehouseID, 10, 32)
 	
-	_, err := ctrl.WarehouseService.GetWarehouseByID(warehouseID)
+	_, err := ctrl.WarehouseService.GetWarehouseByID(uint(warehouseIDInt))
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusNotFound, "Warehouse not found", nil)
 	}
@@ -77,9 +77,8 @@ func (ctrl *WarehouseController) GetShopsByWarehouse(c *fiber.Ctx) error {
 	if warehouseID == "" {
 		return utils.SendResponse(c, fiber.StatusBadRequest, "Warehouse ID is required", nil)	
 	}	
-
-	fmt.Println(warehouseID)
-	_, err := ctrl.WarehouseService.GetWarehouseByID(warehouseID)
+	warehouseIDInt, _ := strconv.ParseUint(warehouseID, 10, 32)
+	_, err := ctrl.WarehouseService.GetWarehouseByID(uint(warehouseIDInt))
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusNotFound, "Warehouse not found", nil)
 	}
@@ -90,4 +89,80 @@ func (ctrl *WarehouseController) GetShopsByWarehouse(c *fiber.Ctx) error {
 	}
 
 	return utils.SendResponse(c, fiber.StatusOK, "Successfully get warehouse shops", warehouseShops)
+}
+
+
+// GetWarehousesByShopID handles fetching warehouses for a specific shop
+func (ctrl *WarehouseController) GetWarehousesByShopID(c *fiber.Ctx) error {
+    shopID := c.Params("shop_id") // Get shop ID from URL parameter
+    id, err := strconv.ParseUint(shopID, 10, 32)
+    if err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid shop ID"})
+    }
+
+    warehouses, err := ctrl.WarehouseService.GetWarehousesByShopID(uint(id))
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.JSON(warehouses)
+}
+
+func (ctrl *WarehouseController) AddStock(c *fiber.Ctx) error {
+    var request struct {
+        WarehouseID uint `json:"warehouse_id"`
+        ProductID   uint `json:"product_id"`
+        Quantity    int  `json:"quantity"`
+    }
+
+    if err := c.BodyParser(&request); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    err := ctrl.WarehouseService.AddStock(request.WarehouseID, request.ProductID, request.Quantity)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Stock added successfully"})
+}
+
+func (ctrl *WarehouseController) TransferStock(c *fiber.Ctx) error {
+    var request struct {
+        FromWarehouseID uint `json:"from_warehouse_id"`
+        ToWarehouseID   uint `json:"to_warehouse_id"`
+        ProductID       uint `json:"product_id"`
+        Quantity        int  `json:"quantity"`
+    }
+
+    if err := c.BodyParser(&request); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    err := ctrl.WarehouseService.TransferStock(request.FromWarehouseID, request.ToWarehouseID, request.ProductID, request.Quantity)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Stock transferred successfully"})
+}
+
+func (ctrl *WarehouseController) SetWarehouseStatus(c *fiber.Ctx) error {
+    var request struct {
+        IsActive bool `json:"is_active"`
+    }
+
+    warehouseID := c.Params("warehouseID")
+	warehouseIDInt, _ := strconv.ParseUint(warehouseID, 10, 32)
+
+    if err := c.BodyParser(&request); err != nil {
+        return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    err := ctrl.WarehouseService.SetWarehouseStatus(uint(warehouseIDInt), request.IsActive)
+    if err != nil {
+        return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+    }
+
+    return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Warehouse status updated successfully"})
 }

@@ -22,3 +22,14 @@ func SendResponse(c *fiber.Ctx, status int, message string, data interface{}) er
 
     return c.Status(status).JSON(response)
 }
+
+type OrderDetails struct {
+    ID    uint   `json:"id"`
+    Items []OrderItem `json:"items"`
+}
+
+type OrderItem struct {
+    ProductID   uint `json:"product_id"`
+    Quantity    int  `json:"quantity"`
+    WarehouseID uint `json:"warehouse_id"` // Assuming you have this information
+}

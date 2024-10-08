@@ -42,6 +42,8 @@ services:
 
   warehouse-service:
     container_name: warehouse-service
+    depends_on:
+      - rabbitmq
     build: 
       context: ./warehouse-service
       dockerfile: Dockerfile
@@ -52,11 +54,13 @@ services:
 
   order-service:
     container_name: order-service
+    depends_on:
+      - rabbitmq
     build: 
       context: ./order-service
       dockerfile: Dockerfile
     ports:
-      - "3003:3003"
+      - "3004:3004"
     env_file:
       - path: ./order-service/.env
 
@@ -101,5 +105,17 @@ services:
       - "9000:9000"
     volumes:
       - grafana-storage:/var/lib/grafana
+    networks:
+      - data
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
     networks:
       - data

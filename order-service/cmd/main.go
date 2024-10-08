@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/gofiber/fiber/v2"
@@ -25,8 +26,9 @@ func main() {
 	orderRepo := repositories.NewOrderRepository(db)
 
 	// Initialize RabbitMQ
-	rabbitMQ, err := messaging.NewRabbitMQ("amqp://guest:guest@localhost:5672/")
+	rabbitMQ, err := messaging.NewRabbitMQ("amqp://user:password@rabbitmq:5672/")
 	if err != nil {
+		fmt.Println(err.Error())
 		panic("failed to connect to RabbitMQ")
 	}
 

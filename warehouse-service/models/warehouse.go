@@ -1,12 +1,28 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"gorm.io/gorm"
+)
 
 type Warehouse struct {
 	gorm.Model
-	Name     string `json:"name" gorm:"not null" validate:"required"`
-	Location string `json:"location" validate:"required"`
-	Status   string `json:"status" validate:"required"`
+    Name      string    `gorm:"not null"`
+    Location  string    `gorm:"not null"`
+    IsActive  bool      `gorm:"default:true"`
+}
+type WarehouseStock struct {
+	gorm.Model
+    WarehouseID uint      `gorm:"not null"`
+    ProductID   uint      `gorm:"not null"`
+    Quantity    int       `gorm:"not null"`
+}
+
+type StockTransfer struct {
+	gorm.Model
+    FromWarehouseID   uint      `gorm:"not null"`
+    ToWarehouseID     uint      `gorm:"not null"`
+    ProductID         uint      `gorm:"not null"`
+    Quantity          int       `gorm:"not null"`
 }
 
 type WarehouseShop struct {
