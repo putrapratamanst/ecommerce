@@ -1,34 +1,31 @@
 package controllers
 
 import (
-	"strconv"
-
 	"github.com/gofiber/fiber/v2"
+	"github.com/putrapratamanst/ecommerce/order-service/models"
 	"github.com/putrapratamanst/ecommerce/order-service/services"
 	"github.com/putrapratamanst/ecommerce/order-service/utils"
 )
 
 type OrderController struct {
-	orderService services.OrderService
+	orderService *services.OrderService
 }
 
-func NewOrderController(orderService services.OrderService) *OrderController {
+func NewOrderController(orderService *services.OrderService) *OrderController {
 	return &OrderController{orderService: orderService}
 }
 
-func (oc *OrderController) PlaceOrder(c *fiber.Ctx) error {
+func (oc *OrderController) CheckoutOrder(c *fiber.Ctx) error {
     userID := c.Locals("userID")
+	var order models.Order
 
-	var request struct {
-		ProductID uint `json:"product_id"`
-		Quantity  int  `json:"quantity"`
-	}
 
-	if err := c.BodyParser(&request); err != nil {
+	if err := c.BodyParser(&order); err != nil {
 		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	order, err := oc.orderService.PlaceOrder(userID.(uint), request.ProductID, request.Quantity)
+	order.UserID = userID.(uint)
+	err := oc.orderService.CheckoutOrder(c.Context(), &order)
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
@@ -36,25 +33,56 @@ func (oc *OrderController) PlaceOrder(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(order)
 }
 
-func (oc *OrderController) GetOrder(c *fiber.Ctx) error {
-	orderID := c.Params("id")
-    u64, _ := strconv.ParseUint(orderID, 10, 32)
-   
-	order, err := oc.orderService.GetOrderByID(uint(u64))
-	if err != nil {
-		return utils.SendResponse(c, fiber.StatusNotFound, "Order not found", nil)
+func (oc *OrderController) PaymentConfirm(c *fiber.Ctx) error {
+	var paymentInfo struct {
+		OrderID int `json:"order_id" validate:"required"`
+	}
+	
+	if err := c.BodyParser(&paymentInfo); err != nil {
+		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	return c.JSON(order)
-}
-
-func (oc *OrderController) GetOrders(c *fiber.Ctx) error {
-    userID := c.Locals("userID")
-
-	orders, err := oc.orderService.GetOrdersByUserID(userID.(uint))
+	order, err := oc.orderService.GetOrderByID(paymentInfo.OrderID)
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
-	return c.JSON(orders)
+	errUpdate := oc.orderService.UpdateOrderStatus(order)
+	if errUpdate != nil {
+		return utils.SendResponse(c, fiber.StatusInternalServerError, errUpdate.Error(), nil)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(order)
 }
+
+func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
+	var paymentInfo struct {
+		OrderID int `json:"order_id" validate:"required"`
+	}
+	
+	if err := c.BodyParser(&paymentInfo); err != nil {
+		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	order, err := oc.orderService.GetOrderByID(paymentInfo.OrderID)
+	if err != nil {
+		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
+	}
+
+	// Jika order belum dibayar, kita akan mengirim pesan untuk melepaskan stok
+    if order.Status != "PAID" {
+        err := oc.orderService.ReleaseOrder(c.Context(), order)
+        if err != nil {
+            return err
+        }
+    }
+
+	order.Status = "CANCELLED"
+	errUpdate := oc.orderService.UpdateOrderStatus(order)
+	if errUpdate != nil {
+		return utils.SendResponse(c, fiber.StatusInternalServerError, errUpdate.Error(), nil)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(order)
+}
+

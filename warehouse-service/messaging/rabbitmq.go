@@ -1,13 +1,12 @@
 package messaging
 
 import (
-	"fmt"
-
-    amqp "github.com/rabbitmq/amqp091-go"
+	amqp "github.com/rabbitmq/amqp091-go"
 )
 
 type RabbitMQ struct {
-    Channel *amqp.Channel
+    channel *amqp.Channel
+    conn    *amqp.Connection
 }
 
 func NewRabbitMQ(url string) (*RabbitMQ, error) {
@@ -21,36 +20,26 @@ func NewRabbitMQ(url string) (*RabbitMQ, error) {
         return nil, err
     }
 
-    // Declare exchange
-    err = ch.ExchangeDeclare(
-        "order_exchange", // name
-        "direct",         // type
-        true,             // durable
-        false,            // auto-deleted
-        false,            // internal
-        false,            // no-wait
-        nil,              // arguments
-    )
-    if err != nil {
-        return nil, err
-    }
+    return &RabbitMQ{conn: conn, channel: ch}, nil
 
-    return &RabbitMQ{Channel: ch}, nil
 }
 
-func (r *RabbitMQ) PublishOrderPlaced(orderID uint) error {
-    body := fmt.Sprintf("Order %d placed", orderID)
+func (r *RabbitMQ) Consume(queue string, consumerFunc func([]byte)) error {
+    msgs, err := r.channel.Consume(queue, "", true, false, false, false, nil)
+    if err != nil {
+        return err
+    }
 
-    err := r.Channel.Publish(
-        "order_exchange", // exchange
-        "order_placed",   // routing key
-        false,            // mandatory
-        false,            // immediate
-        amqp.Publishing{
-            ContentType: "text/plain",
-            Body:        []byte(body),
-        },
-    )
+    go func() {
+        for msg := range msgs {
+            consumerFunc(msg.Body)
+        }
+    }()
 
-    return err
+    return nil
+}
+
+func (r *RabbitMQ) Close() {
+    r.channel.Close()
+    r.conn.Close()
 }

@@ -1,56 +1,84 @@
 package services
 
 import (
+	"context"
+	"encoding/json"
+	"time"
+
 	"github.com/putrapratamanst/ecommerce/order-service/messaging"
 	"github.com/putrapratamanst/ecommerce/order-service/models"
 	"github.com/putrapratamanst/ecommerce/order-service/repositories"
 )
-
-type OrderService interface {
-    PlaceOrder(userID uint, productID uint, quantity int) (*models.Order, error)
-	GetOrderByID(orderID uint) (*models.Order, error)
-    GetOrdersByUserID(userID uint) ([]models.Order, error)
+type OrderService struct {
+    repo *repositories.OrderRepository
+    mq   *messaging.RabbitMQ
 }
 
-type orderService struct {
-    orderRepo repositories.OrderRepository
-    rabbitMQ  *messaging.RabbitMQ // RabbitMQ instance for publishing messages
+func NewOrderService(repo *repositories.OrderRepository, mq *messaging.RabbitMQ) *OrderService {
+    return &OrderService{repo: repo, mq: mq}
 }
 
-func NewOrderService(orderRepo repositories.OrderRepository, rabbitMQ *messaging.RabbitMQ) OrderService {
-    return &orderService{
-        orderRepo: orderRepo,
-        rabbitMQ:  rabbitMQ,
-    }
-}
-
-// PlaceOrder creates an order and publishes an OrderPlaced event
-func (s *orderService) PlaceOrder(userID uint, productID uint, quantity int) (*models.Order, error) {
-    order := &models.Order{
-        UserID:     userID,
-        ProductID:  productID,
-        Quantity:   quantity,
-        TotalPrice: float64(quantity) * 10.00,
-        Status:     "pending",
-    }
-
-    err := s.orderRepo.CreateOrder(order)
+func (s *OrderService) CheckoutOrder(ctx context.Context, order *models.Order) error {
+    err := s.repo.CreateOrder(order)
     if err != nil {
-        return nil, err
+        return err
     }
 
-    err = s.rabbitMQ.PublishOrderPlaced(order.ID)
+    reservationMessage := map[string]interface{}{
+        "order_id":     order.ID,
+        "shop_id":      order.ShopID,
+        "warehouse_id": order.WarehouseID,
+        "quantity":     order.Quantity,
+    }
+
+    messageBytes, _ := json.Marshal(reservationMessage)
+    err = s.mq.Publish("stock_reservation_queue", messageBytes)
     if err != nil {
-        return nil, err
+        return err
     }
 
-    return order, nil
+    // Set timer to release stock if not paid
+    go s.releaseStockIfNotPaid(ctx, order)
+
+    return nil
 }
 
-func (s *orderService) GetOrderByID(orderID uint) (*models.Order, error) {
-    return s.orderRepo.FindOrderByID(orderID)
+func (s *OrderService) releaseStockIfNotPaid(ctx context.Context, order *models.Order) {
+    select {
+    case <-ctx.Done():
+        return
+    case <-time.After(15 * time.Minute):
+        releaseMessage := map[string]interface{}{
+            "order_id":   order.ID,
+            "product_id": order.ProductID,
+            "quantity":   order.Quantity,
+        }
+        messageBytes, _ := json.Marshal(releaseMessage)
+        s.mq.Publish("stock_release_queue", messageBytes)
+    }
 }
 
-func (s *orderService) GetOrdersByUserID(userID uint) ([]models.Order, error) {
-    return s.orderRepo.FindOrdersByUserID(userID)
+func (s *OrderService) UpdateOrderStatus(order *models.Order) error {
+    return s.repo.UpdateOrderStatus(order.ID, order.Status)
+}
+
+func (s *OrderService) GetOrderByID(orderID int) (*models.Order, error) {
+    return s.repo.FindOrderByID(orderID)
+}
+
+func (s *OrderService) ReleaseOrder(ctx context.Context, order *models.Order) error {
+    releaseMessage := map[string]interface{}{
+        "order_id":     order.ID,
+        "warehouse_id": order.WarehouseID,
+        "product_id":   order.ProductID,
+        "quantity":     order.Quantity,
+    }
+
+    messageBytes, _ := json.Marshal(releaseMessage)
+    err := s.mq.Publish("stock_release_queue", messageBytes)
+    if err != nil {
+        return err
+    }
+
+    return nil
 }

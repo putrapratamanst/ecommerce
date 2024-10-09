@@ -8,8 +8,8 @@ import (
 func SetupOrderRoutes(app *fiber.App, orderController *controllers.OrderController) {
 	orderGroup := app.Group("/orders")
 	{
-		orderGroup.Post("/create", orderController.PlaceOrder)
-		orderGroup.Get("/:id", orderController.GetOrder)
-		orderGroup.Get("/", orderController.GetOrders)
+		orderGroup.Post("/checkout", orderController.CheckoutOrder)
+		orderGroup.Post("/payment/confirm", orderController.PaymentConfirm)
+		orderGroup.Post("/cancel", orderController.CancelOrder)
 	}
 }

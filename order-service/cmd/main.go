@@ -26,18 +26,20 @@ func main() {
 	orderRepo := repositories.NewOrderRepository(db)
 
 	// Initialize RabbitMQ
-	rabbitMQ, err := messaging.NewRabbitMQ("amqp://user:password@rabbitmq:5672/")
+	rabbitmq, err := messaging.NewRabbitMQ("amqp://user:password@rabbitmq:5672/")
 	if err != nil {
 		fmt.Println(err.Error())
 		panic("failed to connect to RabbitMQ")
 	}
+	defer rabbitmq.Close()
 
 	// Initialize services
-	orderService := services.NewOrderService(orderRepo, rabbitMQ)
+	orderService := services.NewOrderService(orderRepo, rabbitmq)
 
 	// Initialize controllers
 	orderController := controllers.NewOrderController(orderService)
 	routes.SetupOrderRoutes(app, orderController)
+
 
 	// Start the server
 	port := os.Getenv("ORDER_SERVICE_PORT")

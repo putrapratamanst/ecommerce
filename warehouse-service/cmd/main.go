@@ -23,10 +23,11 @@ func main() {
 	db := config.InitDB()
 
 	// Initialize RabbitMQ
-	rabbitMQ, err := messaging.NewRabbitMQ("amqp://user:password@rabbitmq:5672/")
+	rabbitmq, err := messaging.NewRabbitMQ("amqp://user:password@rabbitmq:5672/")
 	if err != nil {
 		panic("failed to connect to RabbitMQ")
 	}
+    defer rabbitmq.Close()
 
 	// Setup routes
 	shopServiceURL := os.Getenv("SHOP_SERVICE_URL")
@@ -38,7 +39,7 @@ func main() {
 	routes.SetupWarehouseRoutes(app, warehouseController)
 
 	// Start listening for messages
-	go warehouseService.StartListening(rabbitMQ)
+    go warehouseService.ListenForStockReservation(rabbitmq)
 
 	// Start the server
 	port := os.Getenv("WAREHOUSE_SERVICE_PORT")
