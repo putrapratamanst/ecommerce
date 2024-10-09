@@ -43,7 +43,8 @@ services:
   warehouse-service:
     container_name: warehouse-service
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     build: 
       context: ./warehouse-service
       dockerfile: Dockerfile
@@ -51,11 +52,14 @@ services:
       - "3003:3003"
     env_file:
       - path: ./warehouse-service/.env
+    networks:
+      - data
 
   order-service:
     container_name: order-service
     depends_on:
-      - rabbitmq
+      rabbitmq:
+        condition: service_healthy
     build: 
       context: ./order-service
       dockerfile: Dockerfile
@@ -63,6 +67,8 @@ services:
       - "3004:3004"
     env_file:
       - path: ./order-service/.env
+    networks:
+      - data
 
   redis:
     image: redis:alpine
@@ -81,6 +87,8 @@ services:
       - "5432:5432"
     volumes:
       - db_data:/var/lib/postgresql/data
+    networks:
+      - data
   
   prometheus:
     image: prom/prometheus:latest
@@ -119,3 +127,8 @@ services:
       RABBITMQ_DEFAULT_PASS: password
     networks:
       - data
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
