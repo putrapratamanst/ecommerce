@@ -30,18 +30,12 @@
 						"method": "GET",
 						"header": [],
 						"url": {
-							"raw": "{{product_service_url}}/products?id=1",
+							"raw": "{{product_service_url}}/products",
 							"host": [
 								"{{product_service_url}}"
 							],
 							"path": [
 								"products"
-							],
-							"query": [
-								{
-									"key": "id",
-									"value": "1"
-								}
 							]
 						},
 						"description": "This is a GET request and it is used to \"get\" data from an endpoint. There is no request body for a GET request, but you can use query parameters to help specify the resource you want data on (e.g., in this request, we have `id=1`).\n\nA successful GET response will have a `200 OK` status, and should include some kind of response body - for example, HTML web content or JSON data."
@@ -461,6 +455,50 @@
 					"response": []
 				},
 				{
+					"name": "Activate Warehouse",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQGVkb3QuY29tIiwiZXhwIjoxNzI4MTg4NDE0LCJpZCI6NSwicm9sZSI6ImFkbWluIn0.4zUgIYGh_xZMP3o_917f2L4EPS4wbDbs2Iv2MO9BjBA",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"active\":true\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{warehouse_service_url}}/warehouses/:warehouseID/activate",
+							"host": [
+								"{{warehouse_service_url}}"
+							],
+							"path": [
+								"warehouses",
+								":warehouseID",
+								"activate"
+							],
+							"variable": [
+								{
+									"key": "warehouseID",
+									"value": ""
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
 					"name": "Set warehouse to shop",
 					"request": {
 						"auth": {
@@ -503,16 +541,87 @@
 				{
 					"name": "Set Product Stock",
 					"request": {
-						"method": "GET",
-						"header": []
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlvcG1haWwuY29tIiwiZXhwIjoxNzI4NTc1MTY5LCJpZCI6OCwicm9sZSI6ImFkbWluIn0.aM7AgoAbityEVn6z_JwkRptlDuwBI-89kzYx1S_Xh7g",
+									"type": "string"
+								}
+							]
+						},
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"quantity\":342\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{warehouse_service_url}}/warehouses/:warehouseID/product/:productID/adjust",
+							"host": [
+								"{{warehouse_service_url}}"
+							],
+							"path": [
+								"warehouses",
+								":warehouseID",
+								"product",
+								":productID",
+								"adjust"
+							],
+							"variable": [
+								{
+									"key": "warehouseID",
+									"value": "38"
+								},
+								{
+									"key": "productID",
+									"value": "5"
+								}
+							]
+						}
 					},
 					"response": []
 				},
 				{
-					"name": "Get Shops by Warehouse",
+					"name": "Transfer Stock",
 					"request": {
-						"method": "GET",
-						"header": []
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlvcG1haWwuY29tIiwiZXhwIjoxNzI4NTc1MTY5LCJpZCI6OCwicm9sZSI6ImFkbWluIn0.aM7AgoAbityEVn6z_JwkRptlDuwBI-89kzYx1S_Xh7g",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"fromWarehouseID\":38,\r\n    \"toWarehouseID\":39,\r\n    \"productID\":5,\r\n    \"quantity\":2\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{warehouse_service_url}}/warehouses/transfer",
+							"host": [
+								"{{warehouse_service_url}}"
+							],
+							"path": [
+								"warehouses",
+								"transfer"
+							]
+						}
 					},
 					"response": []
 				}
@@ -522,10 +631,114 @@
 			"name": "order-service",
 			"item": [
 				{
-					"name": "Place Order",
+					"name": "Checkout Order",
 					"request": {
-						"method": "GET",
-						"header": []
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlvcG1haWwuY29tIiwiZXhwIjoxNzI4NTc1MTY5LCJpZCI6OCwicm9sZSI6ImFkbWluIn0.aM7AgoAbityEVn6z_JwkRptlDuwBI-89kzYx1S_Xh7g",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"productID\": 5,\r\n    \"quantity\": 10,\r\n    \"shopID\": 4,\r\n    \"warehouseID\": 38\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_service_url}}/orders/checkout",
+							"host": [
+								"{{order_service_url}}"
+							],
+							"path": [
+								"orders",
+								"checkout"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Cancel Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlvcG1haWwuY29tIiwiZXhwIjoxNzI4NTc1MTY5LCJpZCI6OCwicm9sZSI6ImFkbWluIn0.aM7AgoAbityEVn6z_JwkRptlDuwBI-89kzYx1S_Xh7g",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"orderID\": 23\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_service_url}}/orders/cancel",
+							"host": [
+								"{{order_service_url}}"
+							],
+							"path": [
+								"orders",
+								"cancel"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Payment Order",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFkbWluQHlvcG1haWwuY29tIiwiZXhwIjoxNzI4NTc1MTY5LCJpZCI6OCwicm9sZSI6ImFkbWluIn0.aM7AgoAbityEVn6z_JwkRptlDuwBI-89kzYx1S_Xh7g",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"orderID\": 23\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{order_service_url}}/orders/payment/confirm",
+							"host": [
+								"{{order_service_url}}"
+							],
+							"path": [
+								"orders",
+								"payment",
+								"confirm"
+							]
+						}
 					},
 					"response": []
 				}
