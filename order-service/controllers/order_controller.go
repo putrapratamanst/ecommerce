@@ -1,6 +1,9 @@
 package controllers
 
 import (
+	"strconv"
+
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/putrapratamanst/ecommerce/order-service/models"
 	"github.com/putrapratamanst/ecommerce/order-service/services"
@@ -9,22 +12,29 @@ import (
 
 type OrderController struct {
 	orderService *services.OrderService
+	validate     *validator.Validate
 }
 
 func NewOrderController(orderService *services.OrderService) *OrderController {
-	return &OrderController{orderService: orderService}
+	return &OrderController{orderService: orderService, validate: validator.New()}
 }
 
 func (oc *OrderController) CheckoutOrder(c *fiber.Ctx) error {
-    userID := c.Locals("userID")
-	var order models.Order
+	uID := c.Locals("userID")
+	userID, _ := strconv.Atoi(uID.(string))
 
+	var order models.Order
 
 	if err := c.BodyParser(&order); err != nil {
 		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
-	order.UserID = userID.(uint)
+	order.UserID = uint(userID)
+
+	if err := oc.validate.Struct(order); err != nil {
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation: "+err.Error(), nil)
+	}
+
 	err := oc.orderService.CheckoutOrder(c.Context(), &order)
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
@@ -35,33 +45,41 @@ func (oc *OrderController) CheckoutOrder(c *fiber.Ctx) error {
 
 func (oc *OrderController) PaymentConfirm(c *fiber.Ctx) error {
 	var paymentInfo struct {
-		OrderID int `json:"order_id" validate:"required"`
+		OrderID int `validate:"required"`
 	}
-	
+
 	if err := c.BodyParser(&paymentInfo); err != nil {
 		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
 	}
 
+	if err := oc.validate.Struct(paymentInfo); err != nil {
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation: "+err.Error(), nil)
+	}
 	order, err := oc.orderService.GetOrderByID(paymentInfo.OrderID)
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
+	order.Status = "PAID"
 	errUpdate := oc.orderService.UpdateOrderStatus(order)
 	if errUpdate != nil {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, errUpdate.Error(), nil)
 	}
 
-	return utils.SendResponse(c, fiber.StatusOK, "Successfully confirm payment", order)
+	return utils.SendResponse(c, fiber.StatusOK, "Successfully confirm payment", nil)
 }
 
 func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
 	var paymentInfo struct {
-		OrderID int `json:"order_id" validate:"required"`
+		OrderID int `validate:"required"`
 	}
-	
+
 	if err := c.BodyParser(&paymentInfo); err != nil {
 		return utils.SendResponse(c, fiber.StatusBadRequest, err.Error(), nil)
+	}
+
+	if err := oc.validate.Struct(paymentInfo); err != nil {
+		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation: "+err.Error(), nil)
 	}
 
 	order, err := oc.orderService.GetOrderByID(paymentInfo.OrderID)
@@ -69,20 +87,15 @@ func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
-	// Jika order belum dibayar, kita akan mengirim pesan untuk melepaskan stok
-    if order.Status != "PAID" {
-        err := oc.orderService.ReleaseOrder(c.Context(), order)
-        if err != nil {
-            return err
-        }
-    }
-
-	order.Status = "CANCELLED"
-	errUpdate := oc.orderService.UpdateOrderStatus(order)
-	if errUpdate != nil {
-		return utils.SendResponse(c, fiber.StatusInternalServerError, errUpdate.Error(), nil)
+	if order.Status == "PAID" {
+		return utils.SendResponse(c, fiber.StatusOK, "Paid order cannot be canceled", nil)
 	}
 
-	return utils.SendResponse(c, fiber.StatusOK, "Successfully cancel order", order)
-}
+	// Jika order belum dibayar, kita akan mengirim pesan untuk melepaskan stok
+	err = oc.orderService.ReleaseOrder(c.Context(), order)
+	if err != nil {
+		return err
+	}
 
+	return utils.SendResponse(c, fiber.StatusOK, "Successfully cancel order", nil)
+}

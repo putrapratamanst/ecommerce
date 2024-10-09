@@ -21,3 +21,4 @@ func SendResponse(c *fiber.Ctx, status int, message string, data interface{}) er
 
     return c.Status(status).JSON(response)
 }
+

@@ -3,6 +3,7 @@ package services
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/putrapratamanst/ecommerce/warehouse-service/messaging"
 	"github.com/putrapratamanst/ecommerce/warehouse-service/models"
@@ -17,8 +18,8 @@ func NewWarehouseService(repo *repositories.WarehouseRepository) *WarehouseServi
 	return &WarehouseService{repo: repo}
 }
 
-func (s *WarehouseService) HandleStockReservation(shopID int, warehouseID int, productID int, quantity int) error {
-	return s.repo.ReleaseStock(warehouseID, productID, quantity)
+func (s *WarehouseService) HandleStockReservation(warehouseID int, productID int, quantity int) error {
+	return s.repo.AdjustStock(warehouseID, productID, -quantity)
 }
 
 func (s *WarehouseService) ListenForStockReservation(mq *messaging.RabbitMQ) {
@@ -26,12 +27,11 @@ func (s *WarehouseService) ListenForStockReservation(mq *messaging.RabbitMQ) {
 		var reservationData map[string]interface{}
 		json.Unmarshal(message, &reservationData)
 
-		shopID := int(reservationData["shop_id"].(float64))
 		warehouseID := int(reservationData["warehouse_id"].(float64))
 		productID := int(reservationData["product_id"].(float64))
 		quantity := int(reservationData["quantity"].(float64))
 
-		err := s.HandleStockReservation(shopID, warehouseID, productID, quantity)
+		err := s.HandleStockReservation(warehouseID, productID, quantity)
 		if err != nil {
 			fmt.Println(err.Error())
 		}
@@ -67,7 +67,16 @@ func (s *WarehouseService) GetWarehouseByID(id uint) (*models.Warehouse, error) 
 }
 
 func (s *WarehouseService) SetWarehouseShop(warehouseID string, shopID string) error {
-	return s.repo.SetWarehouseShop(warehouseID, shopID)
+	shopIDInt, _ := strconv.Atoi(shopID)
+	warehouseIDInt, _ := strconv.Atoi(warehouseID)
+
+    // skip if warehouseID or shopID is exist
+    getWarehouseShop, _ := s.repo.GetWarehouseShop(uint(warehouseIDInt), uint(shopIDInt))
+    if getWarehouseShop != nil {
+        return nil
+    }
+    fmt.Println("masuk sini harusnya")
+	return s.repo.SetWarehouseShop(uint(warehouseIDInt), uint(shopIDInt))
 }
 func (s *WarehouseService) SetWarehouseActive(warehouseID int, active bool) error {
 	return s.repo.SetWarehouseActive(warehouseID, active)

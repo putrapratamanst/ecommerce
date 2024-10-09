@@ -19,6 +19,8 @@ services:
       - redis
     env_file:
       - path: ./product-service/.env
+    networks:
+      - data
 
   user-service:
     container_name: user-service
@@ -29,6 +31,8 @@ services:
       - "3001:3001"
     env_file:
       - path: ./user-service/.env
+    networks:
+      - data
 
   shop-service:
     container_name: shop-service
@@ -39,6 +43,8 @@ services:
       - "3002:3002"
     env_file:
       - path: ./shop-service/.env
+    networks:
+      - data
 
   warehouse-service:
     container_name: warehouse-service
@@ -75,6 +81,8 @@ services:
     container_name: ecommerce_redis
     ports:
       - "6379:6379"
+    networks:
+      - data
 
   db:
     image: postgres:latest

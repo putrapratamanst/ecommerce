@@ -40,6 +40,7 @@ func main() {
 
 	// Start listening for messages
     go warehouseService.ListenForStockReservation(rabbitmq)
+    go warehouseService.ListenForStockRelease(rabbitmq)
 
 	// Start the server
 	port := os.Getenv("WAREHOUSE_SERVICE_PORT")

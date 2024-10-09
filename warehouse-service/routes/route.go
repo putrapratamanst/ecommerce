@@ -9,9 +9,8 @@ import (
 func SetupWarehouseRoutes(app *fiber.App, warehouseController *controllers.WarehouseController) {
 
 	app.Post("/warehouses", middleware.AuthMiddleware, warehouseController.CreateWarehouse)
+	app.Post("/warehouses/:warehouseID/activate", warehouseController.ActivateWarehouse)
 	app.Post("/warehouses/:warehouseID/shop/:shopID", middleware.AuthMiddleware, warehouseController.SetWarehouseShop)
-    app.Post("/warehouses/transfer", warehouseController.TransferStock)
-    app.Put("/warehouse/:warehouseID/product/:productID/adjust", warehouseController.AdjustStock)
-    app.Post("/warehouse/transfer", warehouseController.TransferStock)
-    app.Post("/warehouse/:warehouseID/activate", warehouseController.ActivateWarehouse)
+	app.Post("/warehouses/transfer", middleware.AuthMiddleware, warehouseController.TransferStock)
+	app.Put("/warehouses/:warehouseID/product/:productID/adjust", middleware.AuthMiddleware, warehouseController.AdjustStock)
 }
