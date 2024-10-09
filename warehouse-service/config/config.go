@@ -35,9 +35,8 @@ func InitDB() *gorm.DB {
 
 	// Migrate the schema
 	err = db.AutoMigrate(
-		&models.Warehouse{}, 
-		&models.WarehouseShop{},
-		&models.WarehouseShopProductStock{},
+		&models.Warehouse{},
+		&models.WarehouseProductStock{},
 	)
 	if err != nil {
 		log.Fatal("failed to migrate:", err)

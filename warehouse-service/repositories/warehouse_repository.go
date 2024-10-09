@@ -67,9 +67,44 @@ func (r *WarehouseRepository) Create(warehouse *models.Warehouse) error {
 	return r.db.Create(warehouse).Error
 }
 
-func (r *WarehouseRepository) FindByID(id string) (*models.Warehouse, error) {
+func (r *WarehouseRepository) FindByID(id uint) (*models.Warehouse, error) {
 	var warehouse models.Warehouse
 	err := r.db.Where("status = ?", "active").First(&warehouse, id).Error
 	return &warehouse, err
+}
+
+func (r *WarehouseRepository) SetWarehouseShop(warehouseID string, shopID string) (error) {
+    return nil
+}
+
+func (r *WarehouseRepository) AdjustStock(warehouseID int, productID int, quantity int) error {
+    tx := r.db.Begin()
+    if tx.Error != nil {
+        return tx.Error
+    }
+
+    defer func() {
+        if r := recover(); r != nil {
+            tx.Rollback()
+        }
+    }()
+
+    // Pessimistic locking using `FOR UPDATE`
+    if err := tx.Exec(`
+        UPDATE warehouse_product_stock 
+        SET quantity = quantity + ? 
+        WHERE warehouse_id = ? AND product_id = ? 
+        FOR UPDATE
+    `, quantity, warehouseID, productID).Error; err != nil {
+        tx.Rollback() // Rollback if there is an error
+        return err
+    }
+
+    // Commit the transaction
+    if err := tx.Commit().Error; err != nil {
+        return err
+    }
+
+    return nil
 }
 

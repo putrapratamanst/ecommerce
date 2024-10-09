@@ -30,7 +30,7 @@ func (oc *OrderController) CheckoutOrder(c *fiber.Ctx) error {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(order)
+	return utils.SendResponse(c, fiber.StatusOK, "Successfully checkout order", order)
 }
 
 func (oc *OrderController) PaymentConfirm(c *fiber.Ctx) error {
@@ -52,7 +52,7 @@ func (oc *OrderController) PaymentConfirm(c *fiber.Ctx) error {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, errUpdate.Error(), nil)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(order)
+	return utils.SendResponse(c, fiber.StatusOK, "Successfully confirm payment", order)
 }
 
 func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
@@ -83,6 +83,6 @@ func (oc *OrderController) CancelOrder(c *fiber.Ctx) error {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, errUpdate.Error(), nil)
 	}
 
-	return c.Status(fiber.StatusCreated).JSON(order)
+	return utils.SendResponse(c, fiber.StatusOK, "Successfully cancel order", order)
 }
 
