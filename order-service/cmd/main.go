@@ -37,9 +37,11 @@ func main() {
 	orderService := services.NewOrderService(orderRepo, rabbitmq)
 
 	// Initialize controllers
-	orderController := controllers.NewOrderController(orderService)
-	routes.SetupOrderRoutes(app, orderController)
+	productServiceURL := os.Getenv("PRODUCT_SERVICE_URL")
+	productServiceClient := services.NewProductServiceClient(productServiceURL)
 
+	orderController := controllers.NewOrderController(orderService, productServiceClient)
+	routes.SetupOrderRoutes(app, orderController)
 
 	// Start the server
 	port := os.Getenv("ORDER_SERVICE_PORT")

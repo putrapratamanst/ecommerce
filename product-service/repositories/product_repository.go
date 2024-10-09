@@ -22,3 +22,11 @@ func (r *ProductRepository) FindAllProducts(limit, offset int) ([]models.Product
 	r.DB.Model(&models.Product{}).Count(&total)
 	return products, total, nil
 }
+
+func (r *ProductRepository) FindProductByID(productID uint) (*models.Product, error) {
+	var product models.Product
+	if err := r.DB.Where("id = ?", productID).First(&product).Error; err != nil {
+		return nil, err
+	}
+	return &product, nil
+}

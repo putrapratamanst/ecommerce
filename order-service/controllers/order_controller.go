@@ -11,12 +11,16 @@ import (
 )
 
 type OrderController struct {
-	orderService *services.OrderService
-	validate     *validator.Validate
+	orderService   *services.OrderService
+	validate       *validator.Validate
+	productService *services.ProductServiceClient
 }
 
-func NewOrderController(orderService *services.OrderService) *OrderController {
-	return &OrderController{orderService: orderService, validate: validator.New()}
+func NewOrderController(orderService *services.OrderService, productService *services.ProductServiceClient) *OrderController {
+	return &OrderController{orderService: orderService,
+		validate:       validator.New(),
+		productService: productService,
+	}
 }
 
 func (oc *OrderController) CheckoutOrder(c *fiber.Ctx) error {
@@ -30,11 +34,16 @@ func (oc *OrderController) CheckoutOrder(c *fiber.Ctx) error {
 	}
 
 	order.UserID = uint(userID)
-
 	if err := oc.validate.Struct(order); err != nil {
 		return utils.SendResponse(c, fiber.StatusBadRequest, "Invalid input validation: "+err.Error(), nil)
 	}
 
+	product, errProduct := oc.productService.GetProductByID(order.ProductID)
+	if errProduct != nil {
+		return utils.SendResponse(c, fiber.StatusInternalServerError, "Failed to get product details", nil)
+	}
+
+	order.TotalPrice = float64(order.Quantity) * product.Data.Price
 	err := oc.orderService.CheckoutOrder(c.Context(), &order)
 	if err != nil {
 		return utils.SendResponse(c, fiber.StatusInternalServerError, err.Error(), nil)

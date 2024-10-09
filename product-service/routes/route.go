@@ -9,5 +9,6 @@ func SetupRoutes(app *fiber.App, productController *controllers.ProductControlle
 
 	// example route: http://127.0.0.1:3000/products?page=2&limit=2
 	app.Get("/products", productController.GetProducts)
+	app.Get("/products/:id", productController.GetProductByID)
 
 }

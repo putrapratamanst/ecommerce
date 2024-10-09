@@ -34,3 +34,17 @@ func (ctrl *ProductController) GetProducts(ctx *fiber.Ctx) error {
 		"pagination": pagination,
 	})
 }
+
+func (ctrl *ProductController) GetProductByID(ctx *fiber.Ctx) error {
+	productID, err := strconv.Atoi(ctx.Params("id"))
+	if err != nil {
+		return utils.SendResponse(ctx, fiber.StatusBadRequest, "Invalid product ID", nil)
+	}
+
+	product, err := ctrl.ProductService.GetProductByID(uint(productID))
+	if err != nil {
+		return utils.SendResponse(ctx, fiber.StatusNotFound, "Product not found", nil)
+	}
+
+	return utils.SendResponse(ctx, fiber.StatusOK, "Successfully fetched product", product)
+}

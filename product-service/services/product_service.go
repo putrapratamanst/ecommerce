@@ -15,6 +15,7 @@ var ctx = context.Background()
 
 type ProductService interface {
 	GetProducts(limit, offset int) ([]models.Product, int64, error)
+	GetProductByID(productID uint) (*models.Product, error)
 }
 
 type productService struct {
@@ -61,4 +62,14 @@ func (s *productService) GetProducts(limit, offset int) ([]models.Product, int64
 	s.ProductRepository.DB.Model(&models.Product{}).Count(&total)
 
 	return products, total, nil
+}
+
+func (s *productService) GetProductByID(productID uint) (*models.Product, error) {
+
+	product, err := s.ProductRepository.FindProductByID(productID)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }

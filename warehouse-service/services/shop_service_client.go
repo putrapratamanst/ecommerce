@@ -17,12 +17,16 @@ func NewShopServiceClient(shopServiceURL string) *ShopServiceClient {
 }
 
 type ShopDetailResponse struct {
-	ID   int    `json:"id"`
-	Name string `json:"name"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
+	Data    struct {
+		ID   uint   `json:"ID"`
+		Name string `json:"name"`
+	} `json:"data"`
 }
 
 func (s *ShopServiceClient) GetShopByID(shopID string) (*ShopDetailResponse, error) {
-    url := fmt.Sprintf("%s/shops/%s", s.shopServiceURL, shopID)
+	url := fmt.Sprintf("%s/shops/%s", s.shopServiceURL, shopID)
 	resp, err := http.Get(url)
 	if err != nil {
 		return nil, err
